@@ -34,6 +34,11 @@ class MainPanel extends JPanel implements KeyListener, Common {
 
     // hero's position
     private int x, y;
+    // hero's animation counter
+    private int count;
+
+    // thread for character animation
+    private Thread threadAnime;
 
     public MainPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -42,9 +47,14 @@ class MainPanel extends JPanel implements KeyListener, Common {
         // init hero's position
         x = 1;
         y = 1;
+        count = 0;
 
         setFocusable(true);
         addKeyListener(this);
+
+        // run thread
+        threadAnime = new Thread(new AnimationThread());
+        threadAnime.start();
     }
 
     public void paintComponent(Graphics g) {
@@ -119,7 +129,10 @@ class MainPanel extends JPanel implements KeyListener, Common {
     }
 
     private void drawChara(Graphics g) {
-        g.drawImage(heroImage, x * CS, y * CS, this);
+        // switch image based on animation counter
+        g.drawImage(heroImage,
+                    x*CS, y*CS, x*CS+CS, y*CS+CS,
+                    count*CS, 0, CS+count*CS, CS, this);
     }
 
     private void drawMap(Graphics g) {
@@ -133,6 +146,25 @@ class MainPanel extends JPanel implements KeyListener, Common {
                     g.drawImage(wallImage, j * CS, i * CS, this);
                     break;
                 }
+            }
+        }
+    }
+
+    // Animation Class
+    private class AnimationThread extends Thread {
+        public void run() {
+            while (true) {
+                if (count == 0) {
+                    count = 1;
+                } else if (count == 1) {
+                    count = 0;
+                }
+                repaint();
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } 
             }
         }
     }
