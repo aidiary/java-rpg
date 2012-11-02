@@ -1,7 +1,8 @@
 import java.awt.*;
+import java.awt.event.*;
 import javax.swing.*;
 
-class MainPanel extends JPanel {
+class MainPanel extends JPanel implements KeyListener {
     private static final int WIDTH = 480;
     private static final int HEIGHT = 480;
 
@@ -31,15 +32,50 @@ class MainPanel extends JPanel {
     private Image floorImage;
     private Image wallImage;
 
+    // hero's position
+    private int x, y;
+
     public MainPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         loadImage();
+
+        // init hero's position
+        x = 1;
+        y = 1;
+
+        setFocusable(true);
+        addKeyListener(this);
     }
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         drawMap(g);
-        g.drawImage(heroImage, 0, 0, this);
+        drawChara(g);
+    }
+
+    public void keyPressed(KeyEvent e) {
+        int keyCode = e.getKeyCode();
+        switch (keyCode) {
+            case KeyEvent.VK_LEFT :
+                x--;
+                break;
+            case KeyEvent.VK_RIGHT :
+                x++;
+                break;
+            case KeyEvent.VK_UP :
+                y--;
+                break;
+            case KeyEvent.VK_DOWN :
+                y++;
+                break;
+        }
+        repaint();
+    }
+
+    public void keyReleased(KeyEvent e) {
+    }
+
+    public void keyTyped(KeyEvent e) {
     }
 
     private void loadImage() {
@@ -54,6 +90,10 @@ class MainPanel extends JPanel {
         icon = new ImageIcon(
             getClass().getResource("image/wall.gif"));
         wallImage = icon.getImage();
+    }
+
+    private void drawChara(Graphics g) {
+        g.drawImage(heroImage, x * CS, y * CS, this);
     }
 
     private void drawMap(Graphics g) {
