@@ -2,7 +2,7 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
-class MainPanel extends JPanel implements KeyListener {
+class MainPanel extends JPanel implements KeyListener, Common {
     private static final int WIDTH = 480;
     private static final int HEIGHT = 480;
 
@@ -57,16 +57,16 @@ class MainPanel extends JPanel implements KeyListener {
         int keyCode = e.getKeyCode();
         switch (keyCode) {
             case KeyEvent.VK_LEFT :
-                x--;
+                move(LEFT);
                 break;
             case KeyEvent.VK_RIGHT :
-                x++;
+                move(RIGHT);
                 break;
             case KeyEvent.VK_UP :
-                y--;
+                move(UP);
                 break;
             case KeyEvent.VK_DOWN :
-                y++;
+                move(DOWN);
                 break;
         }
         repaint();
@@ -76,6 +76,32 @@ class MainPanel extends JPanel implements KeyListener {
     }
 
     public void keyTyped(KeyEvent e) {
+    }
+
+    private boolean isHit(int x, int y) {
+        // is there a wall?
+        if (map[y][x] == 1) {
+            return true;
+        }
+        return false;
+    }
+
+    private void move(int dir) {
+        // move if there is not a wall
+        switch (dir) {
+            case LEFT:
+                if (!isHit(x-1, y)) x--;
+                break;
+            case RIGHT:
+                if (!isHit(x+1, y)) x++;
+                break;
+            case UP:
+                if (!isHit(x, y-1)) y--;
+                break;
+            case DOWN:
+                if (!isHit(x, y+1)) y++;
+                break;
+        }
     }
 
     private void loadImage() {
