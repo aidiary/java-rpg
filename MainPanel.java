@@ -34,6 +34,8 @@ class MainPanel extends JPanel implements KeyListener, Common {
 
     // hero's position
     private int x, y;
+    // hero's direction (LEFT, RIGHT, UP or DOWN)
+    private int direction;
     // hero's animation counter
     private int count;
 
@@ -47,6 +49,7 @@ class MainPanel extends JPanel implements KeyListener, Common {
         // init hero's position
         x = 1;
         y = 1;
+        direction = DOWN;
         count = 0;
 
         setFocusable(true);
@@ -101,15 +104,19 @@ class MainPanel extends JPanel implements KeyListener, Common {
         switch (dir) {
             case LEFT:
                 if (!isHit(x-1, y)) x--;
+                direction = LEFT;
                 break;
             case RIGHT:
                 if (!isHit(x+1, y)) x++;
+                direction = RIGHT;
                 break;
             case UP:
                 if (!isHit(x, y-1)) y--;
+                direction = UP;
                 break;
             case DOWN:
                 if (!isHit(x, y+1)) y++;
+                direction = DOWN;
                 break;
         }
     }
@@ -131,8 +138,11 @@ class MainPanel extends JPanel implements KeyListener, Common {
     private void drawChara(Graphics g) {
         // switch image based on animation counter
         g.drawImage(heroImage,
-                    x*CS, y*CS, x*CS+CS, y*CS+CS,
-                    count*CS, 0, CS+count*CS, CS, this);
+                    x * CS, y * CS,
+                    x * CS + CS, y * CS + CS,
+                    count * CS, direction * CS,
+                    CS + count * CS, direction * CS + CS,
+                    this);
     }
 
     private void drawMap(Graphics g) {
