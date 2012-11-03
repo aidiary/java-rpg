@@ -3,8 +3,8 @@ import java.awt.event.*;
 import javax.swing.*;
 
 class MainPanel extends JPanel implements KeyListener, Common {
-    private static final int WIDTH = 480;
-    private static final int HEIGHT = 480;
+    public static final int WIDTH = 480;
+    public static final int HEIGHT = 480;
 
     private Map map;
     private Character hero;
@@ -20,8 +20,26 @@ class MainPanel extends JPanel implements KeyListener, Common {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        map.draw(g);
-        hero.draw(g);
+
+        // calculate offset so that the hero is in the center of a screen.
+        int offsetX = hero.getX() * CS - MainPanel.WIDTH / 2;
+        // do not scroll at the edge of the map
+        if (offsetX < 0) {
+            offsetX = 0;
+        } else if (offsetX > Map.WIDTH - MainPanel.WIDTH) {
+            offsetX = Map.WIDTH - MainPanel.WIDTH;
+        }
+
+        int offsetY = hero.getY() * CS - MainPanel.HEIGHT / 2;
+        // do not scroll at the edge of the map
+        if (offsetY < 0) {
+            offsetY = 0;
+        } else if (offsetY > Map.HEIGHT - MainPanel.HEIGHT) {
+            offsetY = Map.HEIGHT - MainPanel.HEIGHT;
+        }
+
+        map.draw(g, offsetX, offsetY);
+        hero.draw(g, offsetX, offsetY);
     }
 
     public void keyPressed(KeyEvent e) {

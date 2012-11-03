@@ -2,26 +2,37 @@ import java.awt.*;
 import javax.swing.*;
 
 public class Map implements Common {
-    private static final int ROW = 15;
-    private static final int COL = 15;
+    // map size (tile)
+    private static final int ROW = 20;
+    private static final int COL = 30;
 
+    // map size (pixel)
+    public static final int WIDTH = COL * CS;
+    public static final int HEIGHT = ROW * CS;
+
+    // large map
     // map 0:floor 1:wall
     private int[][] map = {
-        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,1,1,1,1,1,0,0,0,0,1},
-        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
-        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
-        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
-        {1,0,0,0,0,1,1,0,1,1,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}};
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1},
+        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
+        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
+        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
+        {1,0,0,0,0,1,1,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,0,1,1,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}};
 
     // mapchip
     private Image floorImage;
@@ -34,19 +45,45 @@ public class Map implements Common {
         loadImage();
     }
 
-    public void draw(Graphics g) {
-        for (int i = 0; i < ROW; i++) {
-            for (int j = 0; j < COL; j++) {
+    public void draw(Graphics g, int offsetX, int offsetY) {
+        // display xrange of map (unit:pixel)
+        int firstTileX = pixelsToTiles(offsetX);
+        int lastTileX = firstTileX + pixelsToTiles(MainPanel.WIDTH) + 1;
+
+        // display yrange of map (unit: pixel)
+        int firstTileY = pixelsToTiles(offsetY);
+        int lastTileY = firstTileY + pixelsToTiles(MainPanel.HEIGHT) + 1;
+
+        // clipping
+        lastTileX = Math.min(lastTileX, COL);
+        lastTileY = Math.min(lastTileY, ROW);
+
+        for (int i = firstTileY; i < lastTileY; i++) {
+            for (int j = firstTileX; j < lastTileX; j++) {
                 switch (map[i][j]) {
                 case 0 :  // floor
-                    g.drawImage(floorImage, j * CS, i * CS, panel);
+                    g.drawImage(floorImage,
+                                tilesToPixels(j) - offsetX,
+                                tilesToPixels(i) - offsetY,
+                                panel);
                     break;
                 case 1 :  // wall
-                    g.drawImage(wallImage, j * CS, i * CS, panel);
+                    g.drawImage(wallImage,
+                                tilesToPixels(j) - offsetX,
+                                tilesToPixels(i) - offsetY,
+                                panel);
                     break;
                 }
             }
         }
+    }
+
+    public static int pixelsToTiles(double pixels) {
+        return (int)Math.floor(pixels / CS);
+    }
+
+    public static int tilesToPixels(int tiles) {
+        return tiles * CS;
     }
 
     public boolean isHit(int x, int y) {
@@ -61,7 +98,7 @@ public class Map implements Common {
         ImageIcon icon = new ImageIcon(
             getClass().getResource("image/floor.gif"));
         floorImage = icon.getImage();
-        
+
         icon = new ImageIcon(
             getClass().getResource("image/wall.gif"));
         wallImage = icon.getImage();

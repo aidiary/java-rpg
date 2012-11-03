@@ -37,13 +37,13 @@ public class Character implements Common {
         threadAnime.start();
     }
 
-    public void draw(Graphics g) {
+    public void draw(Graphics g, int offsetX, int offsetY) {
         // switch image based on animation counter
         g.drawImage(image,
-                    x*CS, y*CS,
-                    x*CS+CS, y*CS+CS,
-                    count*CS, direction*CS,
-                    CS+count*CS, direction*CS+CS,
+                    x * CS - offsetX, y * CS - offsetY,
+                    x * CS - offsetX + CS, y * CS - offsetY + CS,
+                    count * CS, direction * CS,
+                    CS + count * CS, direction * CS + CS,
                     panel);
     }
 
@@ -69,6 +69,14 @@ public class Character implements Common {
         }
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
     private void loadImage(String filename) {
         ImageIcon icon = new ImageIcon(getClass().getResource(filename));
         image = icon.getImage();
@@ -88,7 +96,7 @@ public class Character implements Common {
                     Thread.sleep(300);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                } 
+                }
             }
         }
     }
