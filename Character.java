@@ -20,7 +20,7 @@ public class Character implements Common {
     // reference to MainPanel
     private MainPanel panel;
 
-    public Character(int x, int y, String filename, Map map, MainPanel panel) {
+    public Character(int x, int y, String filename, Map map) {
         // init character
         this.x = 1;
         this.y = 1;
@@ -28,7 +28,6 @@ public class Character implements Common {
         count = 0;
 
         this.map = map;
-        this.panel = panel;
 
         loadImage(filename);
 
@@ -44,7 +43,7 @@ public class Character implements Common {
                     x * CS - offsetX + CS, y * CS - offsetY + CS,
                     count * CS, direction * CS,
                     CS + count * CS, direction * CS + CS,
-                    panel);
+                    null);
     }
 
     public void move(int dir) {
@@ -91,7 +90,6 @@ public class Character implements Common {
                 } else if (count == 1) {
                     count = 0;
                 }
-                panel.repaint();
                 try {
                     Thread.sleep(300);
                 } catch (InterruptedException e) {

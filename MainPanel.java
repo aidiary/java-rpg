@@ -31,7 +31,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
 
         // create map and hero
         map = new Map(this);
-        hero = new Character(1, 1, "image/hero.gif", map, this);
+        hero = new Character(1, 1, "image/hero.gif", map);
 
         // start game loop
         gameLoop = new Thread(this);
