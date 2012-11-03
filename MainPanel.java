@@ -42,7 +42,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         super.paintComponent(g);
 
         // calculate offset so that the hero is in the center of a screen.
-        int offsetX = hero.getX() * CS - MainPanel.WIDTH / 2;
+        int offsetX = hero.getPX() - MainPanel.WIDTH / 2;
         // do not scroll at the edge of the map
         if (offsetX < 0) {
             offsetX = 0;
@@ -50,7 +50,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             offsetX = Map.WIDTH - MainPanel.WIDTH;
         }
 
-        int offsetY = hero.getY() * CS - MainPanel.HEIGHT / 2;
+        int offsetY = hero.getPY() - MainPanel.HEIGHT / 2;
         // do not scroll at the edge of the map
         if (offsetY < 0) {
             offsetY = 0;
@@ -64,22 +64,51 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
 
     public void run() {
         while (true) {
-            if (leftKey.isPressed()) {
-                hero.move(LEFT);
-            } else if (rightKey.isPressed()) {
-                hero.move(RIGHT);
-            } else if (upKey.isPressed()) {
-                hero.move(UP);
-            } else if (downKey.isPressed()) {
-                hero.move(DOWN);
+            checkInput();
+
+            // move hero during pixel-based scrolling
+            if (hero.isMoving()) {
+                if (hero.move()) {
+
+                }
             }
 
             repaint();
 
             try {
-                Thread.sleep(200);
+                Thread.sleep(20);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void checkInput() {
+        if (leftKey.isPressed()) {
+            if (!hero.isMoving()) {
+                hero.setDirection(LEFT);
+                hero.setMoving(true);
+            }
+        }
+
+        if (rightKey.isPressed()) {
+            if (!hero.isMoving()) {
+                hero.setDirection(RIGHT);
+                hero.setMoving(true);
+            }
+        }
+
+        if (upKey.isPressed()) {
+            if (!hero.isMoving()) {
+                hero.setDirection(UP);
+                hero.setMoving(true);
+            }
+        }
+
+        if (downKey.isPressed()) {
+            if (!hero.isMoving()) {
+                hero.setDirection(DOWN);
+                hero.setMoving(true);
             }
         }
     }

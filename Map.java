@@ -3,8 +3,8 @@ import javax.swing.*;
 
 public class Map implements Common {
     // map size (tile)
-    private static final int ROW = 20;
-    private static final int COL = 30;
+    public static final int ROW = 20;
+    public static final int COL = 30;
 
     // map size (pixel)
     public static final int WIDTH = COL * CS;

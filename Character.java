@@ -2,14 +2,23 @@ import java.awt.*;
 import javax.swing.*;
 
 public class Character implements Common {
+    // character's speed
+    private static final int SPEED = 4;
+
     private Image image;
 
-    // character's position
+    // character's position (unit: tile)
     private int x, y;
+    // character's position (unit: pixel)
+    private int px, py;
+
     // character's direction (LEFT, RIGHT, UP or DOWN)
     private int direction;
     // character's animation counter
     private int count;
+
+    private boolean isMoving;
+    private int moveLength;
 
     // thread for character animation
     private Thread threadAnime;
@@ -17,13 +26,13 @@ public class Character implements Common {
     // reference to Map
     private Map map;
 
-    // reference to MainPanel
-    private MainPanel panel;
-
     public Character(int x, int y, String filename, Map map) {
         // init character
         this.x = 1;
         this.y = 1;
+        px = x * CS;
+        py = y * CS;
+
         direction = DOWN;
         count = 0;
 
@@ -39,33 +48,136 @@ public class Character implements Common {
     public void draw(Graphics g, int offsetX, int offsetY) {
         // switch image based on animation counter
         g.drawImage(image,
-                    x * CS - offsetX, y * CS - offsetY,
-                    x * CS - offsetX + CS, y * CS - offsetY + CS,
+                    px - offsetX, py - offsetY,
+                    px - offsetX + CS, py - offsetY + CS,
                     count * CS, direction * CS,
                     CS + count * CS, direction * CS + CS,
                     null);
     }
 
-    public void move(int dir) {
-        // move if there is not a wall
-        switch (dir) {
-            case LEFT:
-                if (!map.isHit(x-1, y)) x--;
-                direction = LEFT;
-                break;
-            case RIGHT:
-                if (!map.isHit(x+1, y)) x++;
-                direction = RIGHT;
-                break;
-            case UP:
-                if (!map.isHit(x, y-1)) y--;
-                direction = UP;
-                break;
-            case DOWN:
-                if (!map.isHit(x, y+1)) y++;
-                direction = DOWN;
-                break;
+    public boolean move() {
+        switch (direction) {
+        case LEFT:
+            if (moveLeft()) {
+                // return true if pixel-based scrolling is completed.
+                return true;
+            }
+            break;
+        case RIGHT:
+            if (moveRight()) {
+                return true;
+            }
+            break;
+        case UP:
+            if (moveUp()) {
+                return true;
+            }
+            break;
+        case DOWN:
+            if (moveDown()) {
+                return true;
+            }
+            break;
         }
+
+        return false;
+    }
+
+    private boolean moveLeft() {
+        int nextX = x - 1;
+        int nextY = y;
+        if (nextX < 0) nextX = 0;
+        if (!map.isHit(nextX, nextY)) {
+            px -= Character.SPEED;
+            if (px < 0) px = 0;
+            moveLength += Character.SPEED;
+            if (moveLength >= CS) {
+                // pixel-based scrolling is completed
+                // hero moves to left tile
+                x--;
+                if (x < 0) x = 0;
+                px = x * CS;
+                isMoving = false;
+                return true;
+            }
+        } else {
+            isMoving = false;
+            px = x * CS;
+            py = y * CS;
+        }
+        return false;
+    }
+
+    private boolean moveRight() {
+        int nextX = x + 1;
+        int nextY = y;
+        if (nextX > Map.COL - 1) nextX = Map.COL - 1;
+        if (!map.isHit(nextX, nextY)) {
+            px += Character.SPEED;
+            if (px > Map.WIDTH - CS)
+                px = Map.WIDTH - CS;
+            moveLength += Character.SPEED;
+            if (moveLength >= CS) {
+                x++;
+                if (x > Map.COL - 1) x = Map.COL - 1;
+                px = x * CS;
+                isMoving = false;
+                return true;
+            }
+        } else {
+            isMoving = false;
+            px = x * CS;
+            py = y * CS;
+        }
+
+        return false;
+    }
+
+    private boolean moveUp() {
+        int nextX = x;
+        int nextY = y - 1;
+        if (nextY < 0) nextY = 0;
+        if (!map.isHit(nextX, nextY)) {
+            py -= Character.SPEED;
+            if (py < 0) py = 0;
+            moveLength += Character.SPEED;
+            if (moveLength >= CS) {
+                y--;
+                if (y < 0) y = 0;
+                py = y * CS;
+                isMoving = false;
+                return true;
+            }
+        } else {
+            isMoving = false;
+            px = x * CS;
+            py = y * CS;
+        }
+        return false;
+    }
+
+    private boolean moveDown() {
+        int nextX = x;
+        int nextY = y + 1;
+        if (nextY > Map.ROW - 1) nextY = Map.ROW - 1;
+        if (!map.isHit(nextX, nextY)) {
+            py += Character.SPEED;
+            if (py > Map.HEIGHT - CS)
+                py = Map.HEIGHT - CS;
+            moveLength += Character.SPEED;
+            if (moveLength >= CS) {
+                y++;
+                if (y > Map.ROW - 1) y = Map.ROW - 1;
+                py = y * CS;
+                isMoving = false;
+                return true;
+            }
+        } else {
+            isMoving = false;
+            px = x * CS;
+            py = y * CS;
+        }
+        return false;
     }
 
     public int getX() {
@@ -74,6 +186,27 @@ public class Character implements Common {
 
     public int getY() {
         return y;
+    }
+
+    public int getPX() {
+        return px;
+    }
+
+    public int getPY() {
+        return py;
+    }
+
+    public void setDirection(int dir) {
+        direction = dir;
+    }
+
+    public boolean isMoving() {
+        return isMoving;
+    }
+
+    public void setMoving(boolean flag) {
+        isMoving = flag;
+        moveLength = 0;
     }
 
     private void loadImage(String filename) {
