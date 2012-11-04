@@ -1,5 +1,6 @@
 import java.awt.*;
 import javax.swing.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -16,9 +17,7 @@ public class Map implements Common {
     private int height;
 
     // chipset
-    private Image floorImage;
-    private Image wallImage;
-    private Image throneImage;
+    private static Image image;
 
     // characters in this map
     private Vector<Character> characters = new Vector<Character>();
@@ -28,7 +27,10 @@ public class Map implements Common {
 
     public Map(String filename, MainPanel panel) {
         load(filename);
-        loadImage();
+
+        if (image == null) {
+            loadImage("image/mapchip.gif");
+        }
     }
 
     public void draw(Graphics g, int offsetX, int offsetY) {
@@ -46,25 +48,19 @@ public class Map implements Common {
 
         for (int i = firstTileY; i < lastTileY; i++) {
             for (int j = firstTileX; j < lastTileX; j++) {
-                switch (map[i][j]) {
-                case 0:  // floor
-                    g.drawImage(floorImage,
-                                tilesToPixels(j) - offsetX,
-                                tilesToPixels(i) - offsetY,
-                                panel);
-                    break;
-                case 1:  // wall
-                    g.drawImage(wallImage,
-                                tilesToPixels(j) - offsetX,
-                                tilesToPixels(i) - offsetY,
-                                panel);
-                    break;
-                case 2:  // throne
-                    g.drawImage(throneImage,
-                                tilesToPixels(j) - offsetX,
-                                tilesToPixels(i) - offsetY,
-                                panel);
-                }
+                int chipID = map[i][j];
+                int cx = (chipID % 8) * CS;
+                int cy = (chipID / 8) * CS;
+                g.drawImage(image,
+                            tilesToPixels(j) - offsetX,
+                            tilesToPixels(i) - offsetY,
+                            tilesToPixels(j) - offsetX + CS,
+                            tilesToPixels(i) - offsetY + CS,
+                            cx,
+                            cy,
+                            cx + CS,
+                            cy + CS,
+                            panel);
             }
         }
 
@@ -145,18 +141,9 @@ public class Map implements Common {
         }
     }
 
-    private void loadImage() {
-        ImageIcon icon = new ImageIcon(
-                getClass().getResource("image/floor.gif"));
-        floorImage = icon.getImage();
-
-        icon = new ImageIcon(
-                getClass().getResource("image/wall.gif"));
-        wallImage = icon.getImage();
-
-        icon = new ImageIcon(
-                getClass().getResource("image/throne.gif"));
-        throneImage = icon.getImage();
+    private void loadImage(String filename) {
+        ImageIcon icon = new ImageIcon(getClass().getResource(filename));
+        image = icon.getImage();
     }
 
     public void show() {

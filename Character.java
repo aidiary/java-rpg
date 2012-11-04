@@ -5,7 +5,8 @@ public class Character implements Common {
     // character's speed
     private static final int SPEED = 4;
 
-    private Image image;
+    private static Image image;
+    private int id;
 
     // character's position (unit: tile)
     private int x, y;
@@ -26,7 +27,7 @@ public class Character implements Common {
     // reference to Map
     private Map map;
 
-    public Character(int x, int y, String filename, Map map) {
+    public Character(int x, int y, int id, Map map) {
         // init character
         this.x = x;
         this.y = x;
@@ -38,7 +39,11 @@ public class Character implements Common {
 
         this.map = map;
 
-        loadImage(filename);
+        if (image == null) {
+            loadImage("image/character.gif");
+        }
+
+        this.id = id;
 
         // run thread
         threadAnime = new Thread(new AnimationThread());
@@ -46,12 +51,18 @@ public class Character implements Common {
     }
 
     public void draw(Graphics g, int offsetX, int offsetY) {
+        int cx = (id % 8) * (CS * 2);
+        int cy = (id / 8) * (CS * 4);
         // switch image based on animation counter
         g.drawImage(image,
-                    px - offsetX, py - offsetY,
-                    px - offsetX + CS, py - offsetY + CS,
-                    count * CS, direction * CS,
-                    CS + count * CS, direction * CS + CS,
+                    px - offsetX,
+                    py - offsetY,
+                    px - offsetX + CS,
+                    py - offsetY + CS,
+                    cx + count * CS,
+                    cy + direction * CS,
+                    cx + CS + count * CS,
+                    cy + direction * CS + CS,
                     null);
     }
 

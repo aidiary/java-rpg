@@ -39,9 +39,9 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         map = new Map("map/map.dat", this);
 
         // create character
-        hero = new Character(4, 4, "image/hero.gif", map);
-        king = new Character(6, 6, "image/king.gif", map);
-        soldier = new Character(8, 9, "image/soldier.gif", map);
+        hero = new Character(4, 4, 0, map);
+        king = new Character(6, 6, 1, map);
+        soldier = new Character(8, 9, 2, map);
 
         // add characters to the map
         map.addCharacter(hero);
