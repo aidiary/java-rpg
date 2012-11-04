@@ -28,8 +28,8 @@ public class Character implements Common {
 
     public Character(int x, int y, String filename, Map map) {
         // init character
-        this.x = 1;
-        this.y = 1;
+        this.x = x;
+        this.y = x;
         px = x * CS;
         py = y * CS;
 
@@ -111,15 +111,15 @@ public class Character implements Common {
     private boolean moveRight() {
         int nextX = x + 1;
         int nextY = y;
-        if (nextX > Map.COL - 1) nextX = Map.COL - 1;
+        if (nextX > map.getCol() - 1) nextX = map.getCol() - 1;
         if (!map.isHit(nextX, nextY)) {
             px += Character.SPEED;
-            if (px > Map.WIDTH - CS)
-                px = Map.WIDTH - CS;
+            if (px > map.getWidth() - CS)
+                px = map.getWidth() - CS;
             moveLength += Character.SPEED;
             if (moveLength >= CS) {
                 x++;
-                if (x > Map.COL - 1) x = Map.COL - 1;
+                if (x > map.getCol() - 1) x = map.getCol() - 1;
                 px = x * CS;
                 isMoving = false;
                 return true;
@@ -159,15 +159,15 @@ public class Character implements Common {
     private boolean moveDown() {
         int nextX = x;
         int nextY = y + 1;
-        if (nextY > Map.ROW - 1) nextY = Map.ROW - 1;
+        if (nextY > map.getRow() - 1) nextY = map.getRow() - 1;
         if (!map.isHit(nextX, nextY)) {
             py += Character.SPEED;
-            if (py > Map.HEIGHT - CS)
-                py = Map.HEIGHT - CS;
+            if (py > map.getHeight() - CS)
+                py = map.getHeight() - CS;
             moveLength += Character.SPEED;
             if (moveLength >= CS) {
                 y++;
-                if (y > Map.ROW - 1) y = Map.ROW - 1;
+                if (y > map.getRow() - 1) y = map.getRow() - 1;
                 py = y * CS;
                 isMoving = false;
                 return true;

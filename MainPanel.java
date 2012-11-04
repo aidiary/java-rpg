@@ -30,8 +30,8 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         downKey = new ActionKey();
 
         // create map and hero
-        map = new Map(this);
-        hero = new Character(1, 1, "image/hero.gif", map);
+        map = new Map("map/map.dat", this);
+        hero = new Character(4, 4, "image/hero.gif", map);
 
         // start game loop
         gameLoop = new Thread(this);
@@ -46,16 +46,16 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         // do not scroll at the edge of the map
         if (offsetX < 0) {
             offsetX = 0;
-        } else if (offsetX > Map.WIDTH - MainPanel.WIDTH) {
-            offsetX = Map.WIDTH - MainPanel.WIDTH;
+        } else if (offsetX > map.getWidth() - MainPanel.WIDTH) {
+            offsetX = map.getWidth() - MainPanel.WIDTH;
         }
 
         int offsetY = hero.getPY() - MainPanel.HEIGHT / 2;
         // do not scroll at the edge of the map
         if (offsetY < 0) {
             offsetY = 0;
-        } else if (offsetY > Map.HEIGHT - MainPanel.HEIGHT) {
-            offsetY = Map.HEIGHT - MainPanel.HEIGHT;
+        } else if (offsetY > map.getHeight() - MainPanel.HEIGHT) {
+            offsetY = map.getHeight() - MainPanel.HEIGHT;
         }
 
         map.draw(g, offsetX, offsetY);

@@ -1,47 +1,29 @@
 import java.awt.*;
 import javax.swing.*;
+import java.io.*;
 
 public class Map implements Common {
+    // map data
+    private int[][] map;
+
     // map size (tile)
-    public static final int ROW = 20;
-    public static final int COL = 30;
+    private int row;
+    private int col;
 
     // map size (pixel)
-    public static final int WIDTH = COL * CS;
-    public static final int HEIGHT = ROW * CS;
+    private int width;
+    private int height;
 
-    // large map
-    // map 0:floor 1:wall
-    private int[][] map = {
-        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,1,1,1,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1},
-        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
-        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
-        {1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1},
-        {1,0,0,0,0,1,1,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,0,1,1,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-        {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}};
-
-    // mapchip
+    // chipset
     private Image floorImage;
     private Image wallImage;
+    private Image throneImage;
 
     // reference to MainPanel
     private MainPanel panel;
 
-    public Map(MainPanel panel) {
+    public Map(String filename, MainPanel panel) {
+        load(filename);
         loadImage();
     }
 
@@ -55,24 +37,29 @@ public class Map implements Common {
         int lastTileY = firstTileY + pixelsToTiles(MainPanel.HEIGHT) + 1;
 
         // clipping
-        lastTileX = Math.min(lastTileX, COL);
-        lastTileY = Math.min(lastTileY, ROW);
+        lastTileX = Math.min(lastTileX, col);
+        lastTileY = Math.min(lastTileY, row);
 
         for (int i = firstTileY; i < lastTileY; i++) {
             for (int j = firstTileX; j < lastTileX; j++) {
                 switch (map[i][j]) {
-                case 0 :  // floor
+                case 0:  // floor
                     g.drawImage(floorImage,
                                 tilesToPixels(j) - offsetX,
                                 tilesToPixels(i) - offsetY,
                                 panel);
                     break;
-                case 1 :  // wall
+                case 1:  // wall
                     g.drawImage(wallImage,
                                 tilesToPixels(j) - offsetX,
                                 tilesToPixels(i) - offsetY,
                                 panel);
                     break;
+                case 2:  // throne
+                    g.drawImage(throneImage,
+                                tilesToPixels(j) - offsetX,
+                                tilesToPixels(i) - offsetY,
+                                panel);
                 }
             }
         }
@@ -87,20 +74,65 @@ public class Map implements Common {
     }
 
     public boolean isHit(int x, int y) {
-        // is there a wall?
-        if (map[y][x] == 1) {
+        // is there a wall or a throne?
+        if (map[y][x] == 1 || map[y][x] == 2) {
             return true;
         }
         return false;
     }
 
+    public int getRow() {
+        return row;
+    }
+
+    public int getCol() {
+        return col;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    private void load(String filename) {
+        try {
+            BufferedReader br = new BufferedReader(
+                new InputStreamReader(getClass().getResourceAsStream(filename)));
+            // load row and col
+            String line = br.readLine();
+            row = Integer.parseInt(line);
+            line = br.readLine();
+            col = Integer.parseInt(line);
+            // set map size
+            width = col * CS;
+            height = row * CS;
+            // load map data
+            map = new int[row][col];
+            for (int i=0; i<row; i++) {
+                line = br.readLine();
+                for (int j=0; j<col; j++) {
+                    map[i][j] = Integer.parseInt(line.charAt(j) + "");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void loadImage() {
         ImageIcon icon = new ImageIcon(
-            getClass().getResource("image/floor.gif"));
+                getClass().getResource("image/floor.gif"));
         floorImage = icon.getImage();
 
         icon = new ImageIcon(
-            getClass().getResource("image/wall.gif"));
+                getClass().getResource("image/wall.gif"));
         wallImage = icon.getImage();
+
+        icon = new ImageIcon(
+                getClass().getResource("image/throne.gif"));
+        throneImage = icon.getImage();
     }
 }
