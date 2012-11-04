@@ -1,13 +1,17 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.util.*;
 
 class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     public static final int WIDTH = 480;
     public static final int HEIGHT = 480;
 
     private Map map;
+
     private Character hero;
+    private Character king;
+    private Character soldier;
 
     // action keys
     private ActionKey leftKey;
@@ -16,6 +20,8 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     private ActionKey downKey;
 
     private Thread gameLoop;
+
+    private Random rand = new Random();
 
     public MainPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -29,9 +35,18 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         upKey = new ActionKey();
         downKey = new ActionKey();
 
-        // create map and hero
+        // create map
         map = new Map("map/map.dat", this);
+
+        // create character
         hero = new Character(4, 4, "image/hero.gif", map);
+        king = new Character(6, 6, "image/king.gif", map);
+        soldier = new Character(8, 9, "image/soldier.gif", map);
+
+        // add characters to the map
+        map.addCharacter(hero);
+        map.addCharacter(king);
+        map.addCharacter(soldier);
 
         // start game loop
         gameLoop = new Thread(this);
@@ -59,19 +74,14 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         }
 
         map.draw(g, offsetX, offsetY);
-        hero.draw(g, offsetX, offsetY);
     }
 
     public void run() {
         while (true) {
             checkInput();
 
-            // move hero during pixel-based scrolling
-            if (hero.isMoving()) {
-                if (hero.move()) {
-
-                }
-            }
+            heroMove();
+            characterMove();
 
             repaint();
 
@@ -110,6 +120,22 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
                 hero.setDirection(DOWN);
                 hero.setMoving(true);
             }
+        }
+    }
+
+    private void heroMove() {
+        if (hero.isMoving()) {
+            if (hero.move()) {
+            }
+        }
+    }
+
+    private void characterMove() {
+        if (soldier.isMoving()) {
+            soldier.move();
+        } else if (rand.nextDouble() < 0.02) {
+            soldier.setDirection(rand.nextInt(4));
+            soldier.setMoving(true);
         }
     }
 

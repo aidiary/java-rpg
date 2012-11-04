@@ -1,6 +1,7 @@
 import java.awt.*;
 import javax.swing.*;
 import java.io.*;
+import java.util.*;
 
 public class Map implements Common {
     // map data
@@ -18,6 +19,9 @@ public class Map implements Common {
     private Image floorImage;
     private Image wallImage;
     private Image throneImage;
+
+    // characters in this map
+    private Vector<Character> characters = new Vector<Character>();
 
     // reference to MainPanel
     private MainPanel panel;
@@ -63,6 +67,33 @@ public class Map implements Common {
                 }
             }
         }
+
+        // draw characters in this map
+        for (int i = 0; i < characters.size(); i++) {
+            Character c = characters.get(i);
+            c.draw(g, offsetX, offsetY);
+        }
+    }
+
+    public boolean isHit(int x, int y) {
+        // Are there a wall or a throne?
+        if (map[y][x] == 1 || map[y][x] == 2) {
+            return true;
+        }
+
+        // Are there other characters?
+        for (int i = 0; i < characters.size(); i++) {
+            Character c = characters.get(i);
+            if (c.getX() == x && c.getY() == y) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void addCharacter(Character c) {
+        characters.add(c);
     }
 
     public static int pixelsToTiles(double pixels) {
@@ -71,14 +102,6 @@ public class Map implements Common {
 
     public static int tilesToPixels(int tiles) {
         return tiles * CS;
-    }
-
-    public boolean isHit(int x, int y) {
-        // is there a wall or a throne?
-        if (map[y][x] == 1 || map[y][x] == 2) {
-            return true;
-        }
-        return false;
     }
 
     public int getRow() {
@@ -134,5 +157,14 @@ public class Map implements Common {
         icon = new ImageIcon(
                 getClass().getResource("image/throne.gif"));
         throneImage = icon.getImage();
+    }
+
+    public void show() {
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                System.out.print(map[i][j]);
+            }
+            System.out.println();
+        }
     }
 }
