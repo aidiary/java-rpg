@@ -15,10 +15,14 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     private ActionKey rightKey;
     private ActionKey upKey;
     private ActionKey downKey;
+    private ActionKey spaceKey;
 
     private Thread gameLoop;
 
     private Random rand = new Random();
+
+    private MessageWindow messageWindow;
+    private static Rectangle WND_RECT = new Rectangle(62, 324, 356, 140);
 
     public MainPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -31,6 +35,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         rightKey = new ActionKey();
         upKey = new ActionKey();
         downKey = new ActionKey();
+        spaceKey = new ActionKey(ActionKey.DETECT_INITIAL_PRESS_ONLY);
 
         // create map
         map = new Map("map/map.dat", "event/event.dat", this);
@@ -40,6 +45,9 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
 
         // add characters to the map
         map.addCharacter(hero);
+
+        // create message window
+        messageWindow = new MessageWindow(WND_RECT);
 
         // start game loop
         gameLoop = new Thread(this);
@@ -66,15 +74,25 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             offsetY = map.getHeight() - MainPanel.HEIGHT;
         }
 
+        // draw map
         map.draw(g, offsetX, offsetY);
+
+        // draw message window
+        messageWindow.draw(g);
     }
 
     public void run() {
         while (true) {
-            checkInput();
+            if (messageWindow.isVisible()) {
+                messageWindowCheckInput();
+            } else {
+                mainWindowCheckInput();
+            }
 
-            heroMove();
-            characterMove();
+            if (!messageWindow.isVisible()) {
+                heroMove();
+                characterMove();
+            }
 
             repaint();
 
@@ -86,7 +104,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         }
     }
 
-    private void checkInput() {
+    private void mainWindowCheckInput() {
         if (leftKey.isPressed()) {
             if (!hero.isMoving()) {
                 hero.setDirection(LEFT);
@@ -113,6 +131,22 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
                 hero.setDirection(DOWN);
                 hero.setMoving(true);
             }
+        }
+
+        if (spaceKey.isPressed()) {
+            // cannot open window if hero is moving
+            if (hero.isMoving()) {
+                return;
+            }
+            if (!messageWindow.isVisible()) {
+                messageWindow.show();
+            }
+        }
+    }
+
+    private void messageWindowCheckInput() {
+        if (spaceKey.isPressed()) {
+            messageWindow.hide();
         }
     }
 
@@ -155,6 +189,9 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         if (keyCode == KeyEvent.VK_DOWN) {
             downKey.press();
         }
+        if (keyCode == KeyEvent.VK_SPACE) {
+            spaceKey.press();
+        }
     }
 
     public void keyReleased(KeyEvent e) {
@@ -171,6 +208,9 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         }
         if (keyCode == KeyEvent.VK_DOWN) {
             downKey.release();
+        }
+        if (keyCode == KeyEvent.VK_SPACE) {
+            spaceKey.release();
         }
     }
 
