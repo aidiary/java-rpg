@@ -139,14 +139,23 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
                 return;
             }
             if (!messageWindow.isVisible()) {
-                messageWindow.show();
+                Character c = hero.talkWith();
+                if (c != null) {
+                    messageWindow.setMessage(c.getMessage());
+                    messageWindow.show();
+                } else {
+                    messageWindow.setMessage("THERE IS NO ONE/IN THAT DIRECTION");
+                    messageWindow.show();
+                }
             }
         }
     }
 
     private void messageWindowCheckInput() {
         if (spaceKey.isPressed()) {
-            messageWindow.hide();
+            if (messageWindow.nextPage()) {
+                messageWindow.hide();
+            }
         }
     }
 

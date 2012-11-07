@@ -190,6 +190,51 @@ public class Character implements Common {
         return false;
     }
 
+    // return the character which is in front of this character
+    public Character talkWith() {
+        int nextX = 0;
+        int nextY = 0;
+        switch (direction) {
+        case LEFT:
+            nextX = x - 1;
+            nextY = y;
+            break;
+        case RIGHT:
+            nextX = x + 1;
+            nextY = y;
+            break;
+        case UP:
+            nextX = x;
+            nextY = y - 1;
+            break;
+        case DOWN:
+            nextX = x;
+            nextY = y + 1;
+            break;
+        }
+
+        // is there a character?
+        Character c = map.checkCharacter(nextX, nextY);
+        // a player and a character are opposed mutually.
+        if (c != null) {
+            switch (direction) {
+            case LEFT:
+                c.setDirection(RIGHT);
+                break;
+            case RIGHT:
+                c.setDirection(LEFT);
+                break;
+            case UP:
+                c.setDirection(DOWN);
+                break;
+            case DOWN:
+                c.setDirection(UP);
+                break;
+            }
+        }
+        return c;
+    }
+
     public int getX() {
         return x;
     }

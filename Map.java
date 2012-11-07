@@ -92,6 +92,17 @@ public class Map implements Common {
         characters.add(c);
     }
 
+    // is there a character in (x, y) ?
+    public Character checkCharacter(int x, int y) {
+        for (int i = 0; i < characters.size(); i++) {
+            Character c = characters.get(i);
+            if (c.getX() == x && c.getY() == y) {
+                return c;
+            }
+        }
+        return null;
+    }
+
     public static int pixelsToTiles(double pixels) {
         return (int)Math.floor(pixels / CS);
     }
@@ -159,7 +170,6 @@ public class Map implements Common {
                 StringTokenizer st = new StringTokenizer(line, ",");
                 String eventType = st.nextToken();
                 if (eventType.equals("CHARACTER")) {
-                    System.out.println(line);
                     makeCharacter(st);
                 }
             }
