@@ -25,9 +25,9 @@ public class Map implements Common {
     // reference to MainPanel
     private MainPanel panel;
 
-    public Map(String filename, MainPanel panel) {
-        load(filename);
-
+    public Map(String mapFile, String eventFile, MainPanel panel) {
+        load(mapFile);
+        loadEvent(eventFile);
         if (image == null) {
             loadImage("image/mapchip.gif");
         }
@@ -116,6 +116,10 @@ public class Map implements Common {
         return height;
     }
 
+    public Vector<Character> getCharacters() {
+        return characters;
+    }
+
     private void load(String filename) {
         try {
             BufferedReader br = new BufferedReader(
@@ -141,9 +145,44 @@ public class Map implements Common {
         }
     }
 
+    private void loadEvent(String filename) {
+        try {
+            // Shift_JIS is one of the Japanese encoding
+            BufferedReader br = new BufferedReader(new InputStreamReader(
+                    getClass().getResourceAsStream(filename), "UTF-8"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                // skip null lines
+                if (line.equals("")) continue;
+                // skip comment lines
+                if (line.startsWith("#")) continue;
+                StringTokenizer st = new StringTokenizer(line, ",");
+                String eventType = st.nextToken();
+                if (eventType.equals("CHARACTER")) {
+                    System.out.println(line);
+                    makeCharacter(st);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void loadImage(String filename) {
         ImageIcon icon = new ImageIcon(getClass().getResource(filename));
         image = icon.getImage();
+    }
+
+    private void makeCharacter(StringTokenizer st) {
+        int x = Integer.parseInt(st.nextToken());
+        int y = Integer.parseInt(st.nextToken());
+        int id = Integer.parseInt(st.nextToken());
+        int direction = Integer.parseInt(st.nextToken());
+        int moveType = Integer.parseInt(st.nextToken());
+        String message = st.nextToken();
+        Character c = new Character(x, y, id, direction, moveType, this);
+        c.setMessage(message);
+        characters.add(c);
     }
 
     public void show() {

@@ -2,8 +2,8 @@ import java.awt.*;
 import javax.swing.*;
 
 public class Character implements Common {
-    // character's speed
     private static final int SPEED = 4;
+    public static final double PROB_MOVE = 0.02;
 
     private static Image image;
     private int id;
@@ -21,29 +21,32 @@ public class Character implements Common {
     private boolean isMoving;
     private int moveLength;
 
+    private int moveType;
+    private String message;
+
     // thread for character animation
     private Thread threadAnime;
 
     // reference to Map
     private Map map;
 
-    public Character(int x, int y, int id, Map map) {
+    public Character(int x, int y, int id, int direction,
+                     int moveType, Map map) {
         // init character
         this.x = x;
-        this.y = x;
+        this.y = y;
         px = x * CS;
         py = y * CS;
-
-        direction = DOWN;
-        count = 0;
-
+        this.id = id;
+        this.direction = direction;
+        this.moveType = moveType;
         this.map = map;
+
+        count = 0;
 
         if (image == null) {
             loadImage("image/character.gif");
         }
-
-        this.id = id;
 
         // run thread
         threadAnime = new Thread(new AnimationThread());
@@ -106,7 +109,6 @@ public class Character implements Common {
                 // pixel-based scrolling is completed
                 // hero moves to left tile
                 x--;
-                if (x < 0) x = 0;
                 px = x * CS;
                 isMoving = false;
                 return true;
@@ -130,7 +132,6 @@ public class Character implements Common {
             moveLength += Character.SPEED;
             if (moveLength >= CS) {
                 x++;
-                if (x > map.getCol() - 1) x = map.getCol() - 1;
                 px = x * CS;
                 isMoving = false;
                 return true;
@@ -154,7 +155,6 @@ public class Character implements Common {
             moveLength += Character.SPEED;
             if (moveLength >= CS) {
                 y--;
-                if (y < 0) y = 0;
                 py = y * CS;
                 isMoving = false;
                 return true;
@@ -178,7 +178,6 @@ public class Character implements Common {
             moveLength += Character.SPEED;
             if (moveLength >= CS) {
                 y++;
-                if (y > map.getRow() - 1) y = map.getRow() - 1;
                 py = y * CS;
                 isMoving = false;
                 return true;
@@ -218,6 +217,18 @@ public class Character implements Common {
     public void setMoving(boolean flag) {
         isMoving = flag;
         moveLength = 0;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public int getMoveType() {
+        return moveType;
     }
 
     private void loadImage(String filename) {

@@ -8,10 +8,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     public static final int HEIGHT = 480;
 
     private Map map;
-
     private Character hero;
-    private Character king;
-    private Character soldier;
 
     // action keys
     private ActionKey leftKey;
@@ -36,17 +33,13 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         downKey = new ActionKey();
 
         // create map
-        map = new Map("map/map.dat", this);
+        map = new Map("map/map.dat", "event/event.dat", this);
 
         // create character
-        hero = new Character(4, 4, 0, map);
-        king = new Character(6, 6, 1, map);
-        soldier = new Character(8, 9, 2, map);
+        hero = new Character(4, 4, 0, DOWN, 0, map);
 
         // add characters to the map
         map.addCharacter(hero);
-        map.addCharacter(king);
-        map.addCharacter(soldier);
 
         // start game loop
         gameLoop = new Thread(this);
@@ -131,11 +124,19 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     }
 
     private void characterMove() {
-        if (soldier.isMoving()) {
-            soldier.move();
-        } else if (rand.nextDouble() < 0.02) {
-            soldier.setDirection(rand.nextInt(4));
-            soldier.setMoving(true);
+        // get characters in the map
+        Vector<Character> characters = map.getCharacters();
+        // move each character
+        for (int i = 0; i < characters.size(); i++) {
+            Character c = characters.get(i);
+            if (c.getMoveType() == 1) {
+                if (c.isMoving()) {
+                    c.move();
+                } else if (rand.nextDouble() < Character.PROB_MOVE) {
+                    c.setDirection(rand.nextInt(4));
+                    c.setMoving(true);
+                }
+            }
         }
     }
 
