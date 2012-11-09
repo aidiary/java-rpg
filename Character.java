@@ -235,6 +235,14 @@ public class Character implements Common {
         return c;
     }
 
+    public TreasureEvent search() {
+        Event event = map.checkEvent(x, y);
+        if (event instanceof TreasureEvent) {
+            return (TreasureEvent)event;
+        }
+        return null;
+    }
+
     public int getX() {
         return x;
     }

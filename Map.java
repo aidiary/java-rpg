@@ -16,11 +16,13 @@ public class Map implements Common {
     private int width;
     private int height;
 
-    // chipset
+    // chip set
     private static Image image;
 
     // characters in this map
     private Vector<Character> characters = new Vector<Character>();
+    // events in this map
+    private Vector<Event> events = new Vector<Event>();
 
     // reference to MainPanel
     private MainPanel panel;
@@ -48,19 +50,29 @@ public class Map implements Common {
 
         for (int i = firstTileY; i < lastTileY; i++) {
             for (int j = firstTileX; j < lastTileX; j++) {
-                int chipID = map[i][j];
-                int cx = (chipID % 8) * CS;
-                int cy = (chipID / 8) * CS;
+                int cx = (map[i][j] % 8) * CS;
+                int cy = (map[i][j] / 8) * CS;
                 g.drawImage(image,
                             tilesToPixels(j) - offsetX,
                             tilesToPixels(i) - offsetY,
                             tilesToPixels(j) - offsetX + CS,
                             tilesToPixels(i) - offsetY + CS,
-                            cx,
-                            cy,
-                            cx + CS,
-                            cy + CS,
-                            panel);
+                            cx, cy, cx + CS, cy + CS, panel);
+
+                // draw events on (i, j)
+                for (int n = 0; n < events.size(); n++) {
+                    Event event = events.get(n);
+                    if (event.x == j && event.y == i) {
+                        cx = (event.id % 8) * CS;
+                        cy = (event.id / 8) * CS;
+                        g.drawImage(image,
+                                    tilesToPixels(j) - offsetX,
+                                    tilesToPixels(i) - offsetY,
+                                    tilesToPixels(j) - offsetX + CS,
+                                    tilesToPixels(i) - offsetY + CS,
+                                    cx, cy, cx + CS, cy + CS, panel);
+                    }
+                }
             }
         }
 
@@ -85,6 +97,14 @@ public class Map implements Common {
             }
         }
 
+        // Are there events?
+        for (int i = 0; i < events.size(); i++) {
+            Event event = events.get(i);
+            if (event.x == x && event.y == y) {
+                return event.isHit;
+            }
+        }
+
         return false;
     }
 
@@ -101,6 +121,20 @@ public class Map implements Common {
             }
         }
         return null;
+    }
+
+    public Event checkEvent(int x, int y) {
+        for (int i = 0; i < events.size(); i++) {
+            Event event = events.get(i);
+            if (event.x == x && event.y == y) {
+                return event;
+            }
+        }
+        return null;
+    }
+
+    public void removeEvent(Event event) {
+        events.remove(event);
     }
 
     public static int pixelsToTiles(double pixels) {
@@ -158,7 +192,6 @@ public class Map implements Common {
 
     private void loadEvent(String filename) {
         try {
-            // Shift_JIS is one of the Japanese encoding
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     getClass().getResourceAsStream(filename), "UTF-8"));
             String line;
@@ -171,6 +204,8 @@ public class Map implements Common {
                 String eventType = st.nextToken();
                 if (eventType.equals("CHARACTER")) {
                     makeCharacter(st);
+                } else if (eventType.equals("TREASURE")) {
+                    makeTreasure(st);
                 }
             }
         } catch (Exception e) {
@@ -193,6 +228,14 @@ public class Map implements Common {
         Character c = new Character(x, y, id, direction, moveType, this);
         c.setMessage(message);
         characters.add(c);
+    }
+
+    private void makeTreasure(StringTokenizer st) {
+        int x = Integer.parseInt(st.nextToken());
+        int y = Integer.parseInt(st.nextToken());
+        String itemName = st.nextToken();
+        TreasureEvent t = new TreasureEvent(x, y, itemName);
+        events.add(t);
     }
 
     public void show() {
