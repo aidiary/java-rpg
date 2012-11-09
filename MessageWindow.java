@@ -1,5 +1,7 @@
 import java.awt.*;
 import javax.swing.*;
+import java.util.*;
+import java.util.Timer;
 
 public class MessageWindow {
     // width of white border
@@ -27,8 +29,13 @@ public class MessageWindow {
     private char[] text = new char[128 * MAX_CHAR_PER_LINE];
     private int maxPage;
     private int curPage = 0;
+    private int curPos;
+    private boolean nextFlag = false;
 
     private MessageEngine messageEngine;
+
+    private Timer timer;
+    private TimerTask task;
 
     public MessageWindow(Rectangle rect) {
         this.rect = rect;
@@ -49,6 +56,8 @@ public class MessageWindow {
         // load cursor image
         ImageIcon icon = new ImageIcon(getClass().getResource("image/cursor.gif"));
         cursorImage = icon.getImage();
+
+        timer = new Timer();
     }
 
     public void draw(Graphics g) {
@@ -66,7 +75,7 @@ public class MessageWindow {
                    innerRect.width, innerRect.height);
 
         // draw a current page
-        for (int i = 0; i < MAX_CHAR_PER_PAGE; i++) {
+        for (int i = 0; i < curPos; i++) {
             char c = text[curPage * MAX_CHAR_PER_PAGE + i];
             int dx = textRect.x + MessageEngine.FONT_WIDTH * (i % MAX_CHAR_PER_LINE);
             int dy = textRect.y + (LINE_HEIGHT + MessageEngine.FONT_HEIGHT) * (i / MAX_CHAR_PER_LINE);
@@ -74,7 +83,7 @@ public class MessageWindow {
         }
 
         // draw a cursor if the current page is not the last page
-        if (curPage < maxPage) {
+        if (curPage < maxPage && nextFlag) {
             int dx = textRect.x + (MAX_CHAR_PER_LINE / 2) * MessageEngine.FONT_WIDTH - 8;
             int dy = textRect.y + (LINE_HEIGHT + MessageEngine.FONT_HEIGHT) * 3;
             g.drawImage(cursorImage, dx, dy, null);
@@ -82,7 +91,9 @@ public class MessageWindow {
     }
 
     public void setMessage(String msg) {
+        curPos = 0;
         curPage = 0;
+        nextFlag = false;
 
         // initialize
         for (int i=0; i<text.length; i++) {
@@ -90,7 +101,7 @@ public class MessageWindow {
         }
 
         int p = 0;  // current position
-        for (int i=0; i<msg.length(); i++) {
+        for (int i = 0; i < msg.length(); i++) {
             char c = msg.charAt(i);
             if (c == '/') {         // new line
                 p += MAX_CHAR_PER_LINE;
@@ -102,14 +113,24 @@ public class MessageWindow {
                 text[p++] = c;
             }
         }
+
         maxPage = p / MAX_CHAR_PER_PAGE;
+
+        task = new FlowingMessageTask();
+        timer.schedule(task, 0L, 20L);
     }
 
     public boolean nextPage() {
         if (curPage == maxPage) {
+            task.cancel();
+            task = null;
             return true;
         }
-        curPage++;
+        if (nextFlag) {
+            curPage++;
+            curPos = 0;
+            nextFlag = false;
+        }
         return false;
     }
 
@@ -124,4 +145,16 @@ public class MessageWindow {
     public boolean isVisible() {
         return isVisible;
     }
+
+    class FlowingMessageTask extends TimerTask {
+        public void run() {
+            if (!nextFlag) {
+                curPos++;
+                if (curPos % MAX_CHAR_PER_PAGE == 0) {
+                    nextFlag = true;
+                }
+            }
+        }
+    }
+
 }
