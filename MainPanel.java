@@ -148,6 +148,13 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
                 return;
             }
 
+            // door
+            DoorEvent door = hero.open();
+            if (door != null) {
+                map.removeEvent(door);
+                return;
+            }
+
             // talk
             if (!messageWindow.isVisible()) {
                 Character c = hero.talkWith();

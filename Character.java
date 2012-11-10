@@ -243,6 +243,34 @@ public class Character implements Common {
         return null;
     }
 
+    public DoorEvent open() {
+        int nextX = 0;
+        int nextY = 0;
+        switch (direction) {
+        case LEFT:
+            nextX = x - 1;
+            nextY = y;
+            break;
+        case RIGHT:
+            nextX = x + 1;
+            nextY = y;
+            break;
+        case UP:
+            nextX = x;
+            nextY = y - 1;
+            break;
+        case DOWN:
+            nextX = x;
+            nextY = y + 1;
+            break;
+        }
+        Event event = map.checkEvent(nextX, nextY);
+        if (event instanceof DoorEvent) {
+            return (DoorEvent)event;
+        }
+        return null;
+    }
+
     public int getX() {
         return x;
     }

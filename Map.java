@@ -206,6 +206,8 @@ public class Map implements Common {
                     makeCharacter(st);
                 } else if (eventType.equals("TREASURE")) {
                     makeTreasure(st);
+                } else if (eventType.equals("DOOR")) {
+                    makeDoor(st);
                 }
             }
         } catch (Exception e) {
@@ -236,6 +238,13 @@ public class Map implements Common {
         String itemName = st.nextToken();
         TreasureEvent t = new TreasureEvent(x, y, itemName);
         events.add(t);
+    }
+
+    private void makeDoor(StringTokenizer st) {
+        int x = Integer.parseInt(st.nextToken());
+        int y = Integer.parseInt(st.nextToken());
+        DoorEvent d = new DoorEvent(x, y);
+        events.add(d);
     }
 
     public void show() {
