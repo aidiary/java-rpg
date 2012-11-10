@@ -27,7 +27,12 @@ public class Map implements Common {
     // reference to MainPanel
     private MainPanel panel;
 
-    public Map(String mapFile, String eventFile, MainPanel panel) {
+    // BGM
+    private int bgmNo;
+
+    public Map(String mapFile, String eventFile, int bgmNo, MainPanel panel) {
+        this.bgmNo = bgmNo;
+
         load(mapFile);
         loadEvent(eventFile);
         if (image == null) {
@@ -164,6 +169,10 @@ public class Map implements Common {
 
     public int getHeight() {
         return height;
+    }
+
+    public int getBgmNo() {
+        return bgmNo;
     }
 
     public Vector<Character> getCharacters() {

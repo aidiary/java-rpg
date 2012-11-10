@@ -2,6 +2,8 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import java.util.*;
+import java.io.*;
+import javax.sound.midi.*;
 
 class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     public static final int WIDTH = 480;
@@ -28,6 +30,9 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     private MessageWindow messageWindow;
     private static Rectangle WND_RECT = new Rectangle(62, 324, 356, 140);
 
+    // BGM
+    private static final String[] bgmNames = {"castle.mid", "field.mid"};
+
     public MainPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
@@ -43,8 +48,8 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
 
         // create map
         maps = new Map[2];
-        maps[0] = new Map("map/king_room.map", "event/king_room.evt", this);
-        maps[1] = new Map("map/field.map", "event/field.evt", this);
+        maps[0] = new Map("map/castle.map", "event/castle.evt", 0, this);
+        maps[1] = new Map("map/field.map", "event/field.evt", 1, this);
         mapNo = 0;  // initial map
 
         // create character
@@ -55,6 +60,11 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
 
         // create message window
         messageWindow = new MessageWindow(WND_RECT);
+
+        // load BGM
+        loadSound();
+
+        MidiEngine.play(maps[mapNo].getBgmNo());
 
         // start game loop
         gameLoop = new Thread(this);
@@ -195,6 +205,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
                     mapNo = m.destMapNo;
                     hero = new Character(m.destX, m.destY, 0, DOWN, 0, maps[mapNo]);
                     maps[mapNo].addCharacter(hero);
+                    MidiEngine.play(maps[mapNo].getBgmNo());
                 }
             }
         }
@@ -258,5 +269,19 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     }
 
     public void keyTyped(KeyEvent e) {
+    }
+
+    private void loadSound() {
+        for (int i = 0; i < bgmNames.length; i++) {
+            try {
+                MidiEngine.load("bgm/" + bgmNames[i]);
+            } catch (MidiUnavailableException e) {
+                e.printStackTrace();
+            } catch (InvalidMidiDataException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
