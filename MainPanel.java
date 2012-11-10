@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.util.*;
 import java.io.*;
 import javax.sound.midi.*;
+import javax.sound.sampled.*;
 
 class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     public static final int WIDTH = 480;
@@ -33,6 +34,9 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     // BGM
     private static final String[] bgmNames = {"castle.mid", "field.mid"};
 
+    // Sound Clip
+    private static final String[] soundNames = {"treasure.wav", "door.wav", "step.wav"};
+
     public MainPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
@@ -61,7 +65,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         // create message window
         messageWindow = new MessageWindow(WND_RECT);
 
-        // load BGM
+        // load BGM and sound clips
         loadSound();
 
         MidiEngine.play(maps[mapNo].getBgmNo());
@@ -111,6 +115,9 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
                 characterMove();
             }
 
+            // sound rendering
+            WaveEngine.render();
+
             repaint();
 
             try {
@@ -159,6 +166,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             // search
             TreasureEvent treasure = hero.search();
             if (treasure != null) {
+                WaveEngine.play(0);
                 messageWindow.setMessage("HERO DISCOVERED/" + treasure.getItemName());
                 messageWindow.show();
                 maps[mapNo].removeEvent(treasure);
@@ -168,6 +176,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             // door
             DoorEvent door = hero.open();
             if (door != null) {
+                WaveEngine.play(1);
                 maps[mapNo].removeEvent(door);
                 return;
             }
@@ -199,6 +208,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             if (hero.move()) {
                 Event event = maps[mapNo].checkEvent(hero.getX(), hero.getY());
                 if (event instanceof MoveEvent) {
+                    WaveEngine.play(2);
                     // move to another map
                     MoveEvent m = (MoveEvent)event;
                     maps[mapNo].removeCharacter(hero);
@@ -283,5 +293,19 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
                 e.printStackTrace();
             }
         }
+
+        // load sound clips
+        for (int i = 0; i < soundNames.length; i++) {
+            try {
+                WaveEngine.load("sound/" + soundNames[i]);
+            } catch (UnsupportedAudioFileException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (LineUnavailableException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 }
