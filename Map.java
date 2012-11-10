@@ -1,8 +1,8 @@
 import java.awt.*;
-import javax.swing.*;
-
 import java.io.*;
 import java.util.*;
+import java.awt.image.*;
+import javax.imageio.*;
 
 public class Map implements Common {
     // map data
@@ -17,7 +17,7 @@ public class Map implements Common {
     private int height;
 
     // chip set
-    private static Image image;
+    private static BufferedImage image;
 
     // characters in this map
     private Vector<Character> characters = new Vector<Character>();
@@ -27,11 +27,12 @@ public class Map implements Common {
     // reference to MainPanel
     private MainPanel panel;
 
-    // BGM
-    private int bgmNo;
+    private String mapFile;
+    private String bgmName;
 
-    public Map(String mapFile, String eventFile, int bgmNo, MainPanel panel) {
-        this.bgmNo = bgmNo;
+    public Map(String mapFile, String eventFile, String bgmName, MainPanel panel) {
+        this.mapFile = mapFile;
+        this.bgmName = bgmName;
 
         load(mapFile);
         loadEvent(eventFile);
@@ -171,12 +172,16 @@ public class Map implements Common {
         return height;
     }
 
-    public int getBgmNo() {
-        return bgmNo;
-    }
-
     public Vector<Character> getCharacters() {
         return characters;
+    }
+
+    public String getBgmName() {
+        return bgmName;
+    }
+
+    public String getMapName() {
+        return mapFile;
     }
 
     private void load(String filename) {
@@ -232,8 +237,11 @@ public class Map implements Common {
     }
 
     private void loadImage(String filename) {
-        ImageIcon icon = new ImageIcon(getClass().getResource(filename));
-        image = icon.getImage();
+        try {
+            image = ImageIO.read(getClass().getResource(filename));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void makeCharacterEvent(StringTokenizer st) {

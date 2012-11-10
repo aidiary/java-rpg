@@ -1,11 +1,13 @@
 import java.awt.*;
-import javax.swing.*;
+import java.io.*;
+import java.awt.image.*;
+import javax.imageio.*;
 
 public class Character implements Common {
     private static final int SPEED = 4;
     public static final double PROB_MOVE = 0.02;
 
-    private static Image image;
+    private static BufferedImage image;
     private int id;
 
     // character's position (unit: tile)
@@ -313,8 +315,11 @@ public class Character implements Common {
     }
 
     private void loadImage(String filename) {
-        ImageIcon icon = new ImageIcon(getClass().getResource(filename));
-        image = icon.getImage();
+        try {
+            image = ImageIO.read(getClass().getResource(filename));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     // Animation Class

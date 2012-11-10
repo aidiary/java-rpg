@@ -1,72 +1,78 @@
 import java.io.*;
-import java.net.*;
+import java.util.*;
 import javax.sound.sampled.*;
 
-public class WaveEngine {
-    private static final int MAX_CLIPS = 256;
+public class WaveEngine implements LineListener {
+    // Sound name -> Sound clip
+    private HashMap<String, Clip> clipMap;
 
-    private static DataClip[] clips = new DataClip[MAX_CLIPS];
-    private static SourceDataLine[] lines = new SourceDataLine[MAX_CLIPS];
-    private static int counter = 0;
-    private static long last;
+    private int maxClips;
+    private int counter = 0;
 
-    public static void load(URL url) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
-        AudioInputStream ais = AudioSystem.getAudioInputStream(url);
-        AudioFormat format = ais.getFormat();
-        DataLine.Info info = new DataLine.Info(SourceDataLine.class, format, AudioSystem.NOT_SPECIFIED);
-
-        DataClip clip = new DataClip(ais);
-
-        // register sound clip
-        clips[counter] = clip;
-        lines[counter] = (SourceDataLine)AudioSystem.getLine(info);
-        lines[counter].open(format);
-        counter++;
+    public WaveEngine() {
+        this(256);
     }
 
-    public static void load(String filename) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
-        URL url = WaveEngine.class.getResource(filename);
-        load(url);
+    public WaveEngine(int maxClips) {
+        this.maxClips = maxClips;
+        clipMap = new HashMap<String, Clip>(maxClips);
     }
 
-    public static void play(int no) {
-        if (clips[no] == null) {
+    public void load(String name, String filename) {
+        if (counter == maxClips) {
+            System.out.println("ERROR: cannot load a sound clip any more.");
             return;
         }
 
-        clips[no].index = 0;
-        clips[no].running = true;
+        try {
+            AudioInputStream stream = AudioSystem.getAudioInputStream(
+                    getClass().getResource(filename));
 
-        lines[no].flush();
-        lines[no].start();
+            AudioFormat format = stream.getFormat();
+            // transform ulaw/alaw format into pcm format
+            if ((format.getEncoding() == AudioFormat.Encoding.ULAW)
+                    || (format.getEncoding() == AudioFormat.Encoding.ALAW)) {
+                AudioFormat newFormat = new AudioFormat(
+                        AudioFormat.Encoding.PCM_SIGNED,
+                        format.getSampleRate(),
+                        format.getSampleSizeInBits() * 2, format.getChannels(),
+                        format.getFrameSize() * 2, format.getFrameRate(), true);
+                stream = AudioSystem.getAudioInputStream(newFormat, stream);
+                format = newFormat;
+            }
+
+            DataLine.Info info = new DataLine.Info(Clip.class, format);
+            if (!AudioSystem.isLineSupported(info)) {
+                System.out.println("ERROR: not supported format");
+                System.exit(0);
+            }
+
+            Clip clip = (Clip) AudioSystem.getLine(info);
+            clip.addLineListener(this);
+            clip.open(stream);
+            clipMap.put(name, clip);
+            stream.close();
+        } catch (UnsupportedAudioFileException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (LineUnavailableException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void stop(int no) {
-        if (clips[no] == null) {
-            return;
+    public void play(String name) {
+        Clip clip = (Clip)clipMap.get(name);
+        if (clip != null) {
+            clip.start();
         }
-        clips[no].running = false;
-        lines[no].stop();
     }
 
-    public static void render() {
-        long current = System.currentTimeMillis();
-        int difference = (int)(current - last);
-
-        for (int i=0; i<counter; i++) {
-            if (!clips[i].running) {
-                continue;
-            }
-            clips[i].calculateSampleRate(difference);
-            int bytes = Math.min(clips[i].sampleRate, clips[i].data.length - clips[i].index);
-            if (bytes > 0) {
-                lines[i].write(clips[i].data, clips[i].index, bytes);
-                clips[i].index += bytes;
-            }
-            if (clips[i].index >= clips[i].data.length) {
-                stop(i);
-            }
+    public void update(LineEvent event) {
+        if (event.getType() == LineEvent.Type.STOP) {
+            Clip clip = (Clip) event.getSource();
+            clip.stop();
+            clip.setFramePosition(0);
         }
-        last = current;
     }
 }

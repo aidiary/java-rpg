@@ -1,67 +1,101 @@
-import java.io.IOException;
-import java.net.URL;
+import java.io.*;
+import java.util.*;
 import javax.sound.midi.*;
 
-public class MidiEngine {
-    private static final int MAX_SEQUENCE = 256;
-    private static final int END_OF_TRACK_MESSAGE = 47;
+public class MidiEngine implements MetaEventListener {
+    private static final int END_OF_TRACK = 47;
 
-    private static Sequence[] sequences = new Sequence[MAX_SEQUENCE];
-    private static Sequencer sequencer;
-    private static int counter = 0;
-    private static int playSequenceNo = -1;
-    private static long startTick = 0;
+    private Sequencer sequencer;
+    private Synthesizer synthesizer;
 
-    public static void load(URL url) throws MidiUnavailableException, InvalidMidiDataException, IOException {
-        if (sequencer == null) {
+    // BGM name -> MIDI sequence
+    private HashMap<String, Sequence> midiMap;
+
+    private int maxSequences;
+    private int counter = 0;
+    String currentSequenceName = "";
+
+    public MidiEngine() {
+        this(256);
+    }
+
+    public MidiEngine(int maxSequences) {
+        this.maxSequences = maxSequences;
+        midiMap = new HashMap<String, Sequence>(maxSequences);
+        initSequencer();
+    }
+
+    private void initSequencer() {
+        try {
             sequencer = MidiSystem.getSequencer();
             sequencer.open();
-            sequencer.addMetaEventListener(new MyMetaEventListener());
-        }
-        sequences[counter] = MidiSystem.getSequence(url);
-        counter++;
-    }
-
-    public static void load(String filename) throws MidiUnavailableException, InvalidMidiDataException, IOException {
-        URL url = MidiEngine.class.getResource(filename);
-        load(url);
-    }
-
-    public static void play(int no) {
-        if (sequences[no] == null) {
-            return;
-        }
-        if (playSequenceNo == no) {
-            return;
-        }
-
-        // stop current midi sequence
-        stop();
-
-        try {
-            sequencer.setSequence(sequences[no]);
-            playSequenceNo = no;
-            startTick = sequencer.getMicrosecondPosition();
-            sequencer.start();
-        } catch (InvalidMidiDataException e) {
+            sequencer.addMetaEventListener(this);
+            if (!(sequencer instanceof Synthesizer)) {  // after J2SE1.5
+                synthesizer = MidiSystem.getSynthesizer();
+                synthesizer.open();
+                Receiver synthReceiver = synthesizer.getReceiver();
+                Transmitter seqTransmitter = sequencer.getTransmitter();
+                seqTransmitter.setReceiver(synthReceiver);
+            } else { // before J2SE 1.4.2
+                synthesizer = (Synthesizer) sequencer;
+            }
+        } catch (MidiUnavailableException e) {
             e.printStackTrace();
         }
     }
 
-    public static void stop() {
+    public void load(String name, String filename) {
+        if (counter == maxSequences) {
+            System.out.println("ERROR: cannot load a sequence any more.");
+            return;
+        }
+
+        try {
+            Sequence seq = MidiSystem.getSequence(
+                    getClass().getResource(filename));
+            midiMap.put(name, seq);
+        } catch (InvalidMidiDataException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void play(String name) {
+        if (currentSequenceName.equals(name)) {
+            return;
+        }
+        stop();
+        Sequence seq = (Sequence)midiMap.get(name);
+        if (sequencer != null && seq != null) {
+            try {
+                sequencer.setSequence(seq);
+                sequencer.start();
+                currentSequenceName = name;
+            } catch (InvalidMidiDataException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void stop() {
         if (sequencer.isRunning()) {
             sequencer.stop();
         }
     }
 
-    // for loop
-    private static class MyMetaEventListener implements MetaEventListener {
-        public void meta(MetaMessage meta) {
-            if (meta.getType() == END_OF_TRACK_MESSAGE) {
-                if (sequencer != null && sequencer.isOpen()) {
-                    sequencer.setMicrosecondPosition(startTick);
-                    sequencer.start();
-                }
+    public void close() {
+        stop();
+        sequencer.removeMetaEventListener(this);
+        sequencer.close();
+        sequencer = null;
+    }
+
+    public void meta(MetaMessage meta) {
+        if (meta.getType() == END_OF_TRACK) {
+            if (sequencer != null && sequencer.isOpen()) {
+                sequencer.setMicrosecondPosition(0);
+                sequencer.start();
             }
         }
     }

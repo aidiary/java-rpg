@@ -1,20 +1,24 @@
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
 import java.util.*;
-import java.io.*;
-import javax.sound.midi.*;
-import javax.sound.sampled.*;
+import javax.swing.*;
 
 class MainPanel extends JPanel implements KeyListener, Runnable, Common {
-    public static final int WIDTH = 480;
-    public static final int HEIGHT = 480;
+    public static final int WIDTH = 640;
+    public static final int HEIGHT = 640;
+
+    // 20ms/frame = 50fps
+    private static final int PERIOD = 20;
+
+    // debug mode
+    private static final boolean DEBUG_MODE = true;
 
     // map list
     private Map[] maps;
     // current map number
     private int mapNo;
 
+    // our hero!
     private Character hero;
 
     // action keys
@@ -25,17 +29,23 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     private ActionKey spaceKey;
 
     private Thread gameLoop;
-
     private Random rand = new Random();
 
     private MessageWindow messageWindow;
-    private static Rectangle WND_RECT = new Rectangle(62, 324, 356, 140);
+    private static Rectangle WND_RECT = new Rectangle(142, 480, 356, 140);
+
+    private MidiEngine midiEngine = new MidiEngine();
+    private WaveEngine waveEngine = new WaveEngine();
 
     // BGM
-    private static final String[] bgmNames = {"castle.mid", "field.mid"};
-
+    // from TAM Music Factory http://www.tam-music.com/
+    private static final String[] bgmNames = {"castle", "field"};
     // Sound Clip
-    private static final String[] soundNames = {"treasure.wav", "door.wav", "step.wav"};
+    private static final String[] soundNames = {"treasure", "door", "step"};
+
+    // double buffering
+    private Graphics dbg;
+    private Image dbImage = null;
 
     public MainPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -52,12 +62,12 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
 
         // create map
         maps = new Map[2];
-        maps[0] = new Map("map/castle.map", "event/castle.evt", 0, this);
-        maps[1] = new Map("map/field.map", "event/field.evt", 1, this);
+        maps[0] = new Map("map/castle.map", "event/castle.evt", "castle", this);
+        maps[1] = new Map("map/field.map", "event/field.evt", "field", this);
         mapNo = 0;  // initial map
 
         // create character
-        hero = new Character(4, 4, 0, DOWN, 0, maps[mapNo]);
+        hero = new Character(6, 6, 0, DOWN, 0, maps[mapNo]);
 
         // add characters to the map
         maps[mapNo].addCharacter(hero);
@@ -68,15 +78,69 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         // load BGM and sound clips
         loadSound();
 
-        MidiEngine.play(maps[mapNo].getBgmNo());
+        midiEngine.play(maps[mapNo].getBgmName());
 
         // start game loop
         gameLoop = new Thread(this);
         gameLoop.start();
     }
 
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
+    public void run() {
+        long beforeTime, timeDiff, sleepTime;
+
+        beforeTime = System.currentTimeMillis();
+        while (true) {
+            checkInput();
+            gameUpdate();
+            gameRender();
+            printScreen();
+
+            timeDiff = System.currentTimeMillis() - beforeTime;
+            sleepTime = PERIOD - timeDiff;
+            // sleep at least 5ms
+            if (sleepTime <= 0) {
+                sleepTime = 5;
+            }
+
+            try {
+                Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            beforeTime = System.currentTimeMillis();
+        }
+    }
+
+    private void checkInput() {
+        if (messageWindow.isVisible()) {
+            messageWindowCheckInput();
+        } else {
+            mainWindowCheckInput();
+        }
+    }
+
+    private void gameUpdate() {
+        if (!messageWindow.isVisible()) {
+            heroMove();
+            characterMove();
+        }
+    }
+
+    private void gameRender() {
+        if (dbImage == null) {
+            // buffer image
+            dbImage = createImage(WIDTH, HEIGHT);
+            if (dbImage == null) {
+                return;
+            } else {
+                // device context of buffer image
+                dbg = dbImage.getGraphics();
+            }
+        }
+
+        dbg.setColor(Color.WHITE);
+        dbg.fillRect(0, 0, WIDTH, HEIGHT);
 
         // calculate offset so that the hero is in the center of a screen.
         int offsetX = hero.getPX() - MainPanel.WIDTH / 2;
@@ -96,35 +160,31 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         }
 
         // draw map
-        maps[mapNo].draw(g, offsetX, offsetY);
+        maps[mapNo].draw(dbg, offsetX, offsetY);
 
         // draw message window
-        messageWindow.draw(g);
+        messageWindow.draw(dbg);
+
+        // display debug information
+        if (DEBUG_MODE) {
+            Font font = new Font("SansSerif", Font.BOLD, 16);
+            dbg.setFont(font);
+            dbg.setColor(Color.YELLOW);
+            dbg.drawString(maps[mapNo].getMapName() + " (" + maps[mapNo].getCol() + "," + maps[mapNo].getRow() + ")", 4, 16);
+            dbg.drawString("(" + hero.getX() + "," + hero.getY() + ") ", 4, 32);
+            dbg.drawString("(" + hero.getPX() + "," + hero.getPY() + ")", 4, 48);
+            dbg.drawString(maps[mapNo].getBgmName(), 4, 64);
+        }
     }
 
-    public void run() {
-        while (true) {
-            if (messageWindow.isVisible()) {
-                messageWindowCheckInput();
-            } else {
-                mainWindowCheckInput();
-            }
-
-            if (!messageWindow.isVisible()) {
-                heroMove();
-                characterMove();
-            }
-
-            // sound rendering
-            WaveEngine.render();
-
-            repaint();
-
-            try {
-                Thread.sleep(20);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+    private void printScreen() {
+        Graphics g = getGraphics();
+        if ((g != null) && (dbImage != null)) {
+            g.drawImage(dbImage, 0, 0, null);
+        }
+        Toolkit.getDefaultToolkit().sync();
+        if (g != null) {
+            g.dispose();
         }
     }
 
@@ -166,7 +226,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             // search
             TreasureEvent treasure = hero.search();
             if (treasure != null) {
-                WaveEngine.play(0);
+                waveEngine.play("treasure");
                 messageWindow.setMessage("HERO DISCOVERED/" + treasure.getItemName());
                 messageWindow.show();
                 maps[mapNo].removeEvent(treasure);
@@ -176,7 +236,7 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             // door
             DoorEvent door = hero.open();
             if (door != null) {
-                WaveEngine.play(1);
+                waveEngine.play("door");
                 maps[mapNo].removeEvent(door);
                 return;
             }
@@ -208,14 +268,14 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             if (hero.move()) {
                 Event event = maps[mapNo].checkEvent(hero.getX(), hero.getY());
                 if (event instanceof MoveEvent) {
-                    WaveEngine.play(2);
+                    waveEngine.play("step");
                     // move to another map
                     MoveEvent m = (MoveEvent)event;
                     maps[mapNo].removeCharacter(hero);
                     mapNo = m.destMapNo;
                     hero = new Character(m.destX, m.destY, 0, DOWN, 0, maps[mapNo]);
                     maps[mapNo].addCharacter(hero);
-                    MidiEngine.play(maps[mapNo].getBgmNo());
+                    midiEngine.play(maps[mapNo].getBgmName());
                 }
             }
         }
@@ -282,30 +342,14 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     }
 
     private void loadSound() {
+        // load midi files
         for (int i = 0; i < bgmNames.length; i++) {
-            try {
-                MidiEngine.load("bgm/" + bgmNames[i]);
-            } catch (MidiUnavailableException e) {
-                e.printStackTrace();
-            } catch (InvalidMidiDataException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            midiEngine.load(bgmNames[i], "bgm/" + bgmNames[i] + ".mid");
         }
 
-        // load sound clips
+        // load sound clip files
         for (int i = 0; i < soundNames.length; i++) {
-            try {
-                WaveEngine.load("sound/" + soundNames[i]);
-            } catch (UnsupportedAudioFileException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (LineUnavailableException e) {
-                e.printStackTrace();
-            }
+            waveEngine.load(soundNames[i], "sound/" + soundNames[i] + ".wav");
         }
-
     }
 }
