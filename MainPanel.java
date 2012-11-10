@@ -7,7 +7,11 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     public static final int WIDTH = 480;
     public static final int HEIGHT = 480;
 
-    private Map map;
+    // map list
+    private Map[] maps;
+    // current map number
+    private int mapNo;
+
     private Character hero;
 
     // action keys
@@ -38,13 +42,16 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         spaceKey = new ActionKey(ActionKey.DETECT_INITIAL_PRESS_ONLY);
 
         // create map
-        map = new Map("map/map.dat", "event/event.dat", this);
+        maps = new Map[2];
+        maps[0] = new Map("map/king_room.map", "event/king_room.evt", this);
+        maps[1] = new Map("map/field.map", "event/field.evt", this);
+        mapNo = 0;  // initial map
 
         // create character
-        hero = new Character(4, 4, 0, DOWN, 0, map);
+        hero = new Character(4, 4, 0, DOWN, 0, maps[mapNo]);
 
         // add characters to the map
-        map.addCharacter(hero);
+        maps[mapNo].addCharacter(hero);
 
         // create message window
         messageWindow = new MessageWindow(WND_RECT);
@@ -62,20 +69,20 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
         // do not scroll at the edge of the map
         if (offsetX < 0) {
             offsetX = 0;
-        } else if (offsetX > map.getWidth() - MainPanel.WIDTH) {
-            offsetX = map.getWidth() - MainPanel.WIDTH;
+        } else if (offsetX > maps[mapNo].getWidth() - MainPanel.WIDTH) {
+            offsetX = maps[mapNo].getWidth() - MainPanel.WIDTH;
         }
 
         int offsetY = hero.getPY() - MainPanel.HEIGHT / 2;
         // do not scroll at the edge of the map
         if (offsetY < 0) {
             offsetY = 0;
-        } else if (offsetY > map.getHeight() - MainPanel.HEIGHT) {
-            offsetY = map.getHeight() - MainPanel.HEIGHT;
+        } else if (offsetY > maps[mapNo].getHeight() - MainPanel.HEIGHT) {
+            offsetY = maps[mapNo].getHeight() - MainPanel.HEIGHT;
         }
 
         // draw map
-        map.draw(g, offsetX, offsetY);
+        maps[mapNo].draw(g, offsetX, offsetY);
 
         // draw message window
         messageWindow.draw(g);
@@ -144,14 +151,14 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
             if (treasure != null) {
                 messageWindow.setMessage("HERO DISCOVERED/" + treasure.getItemName());
                 messageWindow.show();
-                map.removeEvent(treasure);
+                maps[mapNo].removeEvent(treasure);
                 return;
             }
 
             // door
             DoorEvent door = hero.open();
             if (door != null) {
-                map.removeEvent(door);
+                maps[mapNo].removeEvent(door);
                 return;
             }
 
@@ -180,13 +187,22 @@ class MainPanel extends JPanel implements KeyListener, Runnable, Common {
     private void heroMove() {
         if (hero.isMoving()) {
             if (hero.move()) {
+                Event event = maps[mapNo].checkEvent(hero.getX(), hero.getY());
+                if (event instanceof MoveEvent) {
+                    // move to another map
+                    MoveEvent m = (MoveEvent)event;
+                    maps[mapNo].removeCharacter(hero);
+                    mapNo = m.destMapNo;
+                    hero = new Character(m.destX, m.destY, 0, DOWN, 0, maps[mapNo]);
+                    maps[mapNo].addCharacter(hero);
+                }
             }
         }
     }
 
     private void characterMove() {
         // get characters in the map
-        Vector<Character> characters = map.getCharacters();
+        Vector<Character> characters = maps[mapNo].getCharacters();
         // move each character
         for (int i = 0; i < characters.size(); i++) {
             Character c = characters.get(i);

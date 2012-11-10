@@ -84,8 +84,9 @@ public class Map implements Common {
     }
 
     public boolean isHit(int x, int y) {
-        // Are there a wall or a throne?
-        if (map[y][x] == 1 || map[y][x] == 2) {
+        if (map[y][x] == 1 ||    // wall
+            map[y][x] == 2 ||    // throan
+            map[y][x] == 5) {    // sea
             return true;
         }
 
@@ -110,6 +111,10 @@ public class Map implements Common {
 
     public void addCharacter(Character c) {
         characters.add(c);
+    }
+
+    public void removeCharacter(Character c) {
+        characters.remove(c);
     }
 
     // is there a character in (x, y) ?
@@ -203,11 +208,13 @@ public class Map implements Common {
                 StringTokenizer st = new StringTokenizer(line, ",");
                 String eventType = st.nextToken();
                 if (eventType.equals("CHARACTER")) {
-                    makeCharacter(st);
+                    makeCharacterEvent(st);
                 } else if (eventType.equals("TREASURE")) {
-                    makeTreasure(st);
+                    makeTreasureEvent(st);
                 } else if (eventType.equals("DOOR")) {
-                    makeDoor(st);
+                    makeDoorEvent(st);
+                } else if (eventType.equals("MOVE")) {
+                    makeMoveEvent(st);
                 }
             }
         } catch (Exception e) {
@@ -220,7 +227,7 @@ public class Map implements Common {
         image = icon.getImage();
     }
 
-    private void makeCharacter(StringTokenizer st) {
+    private void makeCharacterEvent(StringTokenizer st) {
         int x = Integer.parseInt(st.nextToken());
         int y = Integer.parseInt(st.nextToken());
         int id = Integer.parseInt(st.nextToken());
@@ -232,7 +239,7 @@ public class Map implements Common {
         characters.add(c);
     }
 
-    private void makeTreasure(StringTokenizer st) {
+    private void makeTreasureEvent(StringTokenizer st) {
         int x = Integer.parseInt(st.nextToken());
         int y = Integer.parseInt(st.nextToken());
         String itemName = st.nextToken();
@@ -240,11 +247,22 @@ public class Map implements Common {
         events.add(t);
     }
 
-    private void makeDoor(StringTokenizer st) {
+    private void makeDoorEvent(StringTokenizer st) {
         int x = Integer.parseInt(st.nextToken());
         int y = Integer.parseInt(st.nextToken());
         DoorEvent d = new DoorEvent(x, y);
         events.add(d);
+    }
+
+    private void makeMoveEvent(StringTokenizer st) {
+        int x = Integer.parseInt(st.nextToken());
+        int y = Integer.parseInt(st.nextToken());
+        int chipNo = Integer.parseInt(st.nextToken());
+        int destMapNo = Integer.parseInt(st.nextToken());
+        int destX = Integer.parseInt(st.nextToken());
+        int destY = Integer.parseInt(st.nextToken());
+        MoveEvent m = new MoveEvent(x, y, chipNo, destMapNo, destX, destY);
+        events.add(m);
     }
 
     public void show() {
